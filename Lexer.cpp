@@ -1,5 +1,3 @@
-Lexer.cpp:
-
 #include "Lexer.h"
 
 #include <cctype>
