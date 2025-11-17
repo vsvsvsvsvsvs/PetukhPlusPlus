@@ -8,4 +8,7 @@ add_executable(PetukhPlusPlus main.cpp
         Lexer.h
         Lexer.cpp
         Trie.h
-        Trie.cpp)
+        Trie.cpp
+        Trie.cpp
+        Lexer.cpp
+        main.cpp)
