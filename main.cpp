@@ -1,5 +1,3 @@
-main.cpp:
-
 #include <fstream>
 #include <iostream>
 #include <sstream>
