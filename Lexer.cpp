@@ -19,6 +19,10 @@ void Lexer::InitTrie() const {
   keyword_trie_.Insert("char", static_cast<int>(TokenType::KW_CHAR));
   keyword_trie_.Insert("double", static_cast<int>(TokenType::KW_DOUBLE));
   keyword_trie_.Insert("string", static_cast<int>(TokenType::KW_STRING));
+
+  keyword_trie_.Insert("return", static_cast<int>(TokenType::KW_RETURN));
+  keyword_trie_.Insert("break", static_cast<int>(TokenType::KW_BREAK));
+  keyword_trie_.Insert("continue", static_cast<int>(TokenType::KW_CONTINUE));
 }
 
 bool Lexer::IsEnd() const { return pos_ >= src_.size(); }
