@@ -14,6 +14,9 @@ enum class TokenType {
   KW_CHAR,
   KW_DOUBLE,
   KW_STRING,
+  KW_RETURN,
+  KW_BREAK,
+  KW_CONTINUE,
 
   IDENTIFIER,
   NUMBER,
