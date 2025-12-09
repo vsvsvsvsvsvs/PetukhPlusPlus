@@ -1,9 +1,13 @@
 #include "Parser.h"
-#include <stdexcept>
 #include <sstream>
+
+// -----------------------------------------------------------------------------
+//  Parser implementation with error accumulation and basic recovery
+// -----------------------------------------------------------------------------
 
 Parser::Parser(const std::vector<Token> &tokens) : tokens_(tokens), pos_(0) {}
 
+// Helpers
 const Token &Parser::Peek() const {
     if (pos_ < tokens_.size()) return tokens_[pos_];
     static Token eof{TokenType::END_OF_FILE, "", 0, 0};
@@ -29,13 +33,43 @@ bool Parser::Match(const std::initializer_list<TokenType> &list) {
     return false;
 }
 
+// AddError: записывает ошибку с позицией
+void Parser::AddError(const std::string &msg) {
+    const Token &t = Peek();
+    std::ostringstream oss;
+    oss << "Line " << t.line << ", col " << t.col << ": " << msg;
+    errors_.push_back(oss.str());
+}
+
+// Expect: не бросает, а добавляет ошибку и продвигается
 const Token &Parser::Expect(TokenType t, const std::string &errMsg) {
-    if (Peek().type == t) { const Token &tok = Peek(); Advance(); return tok; }
+    if (Peek().type == t) {
+        const Token &tok = Peek();
+        Advance();
+        return tok;
+    }
+    // Ошибка: ожидается другой токен
     std::ostringstream oss;
     if (errMsg.empty()) oss << "Syntax error: expected token";
     else oss << errMsg;
     if (Peek().type != TokenType::END_OF_FILE) oss << " at '" << Peek().text << "'";
-    throw std::runtime_error(oss.str());
+    AddError(oss.str());
+
+    // Попытка восстановления: если текущий токен - близкий (например ; ) — вернём фиктивный токен
+    // Иначе — пропустим текущий токен и вернём фиктивный.
+    if (!IsAtEnd()) {
+        // store current location before advancing
+        int line = Peek().line;
+        int col = Peek().col;
+        Advance();
+        static Token dummy{TokenType::UNKNOWN, "", 0, 0};
+        dummy.line = line;
+        dummy.col = col;
+        return dummy;
+    } else {
+        static Token eofTok{TokenType::END_OF_FILE, "", Peek().line, Peek().col};
+        return eofTok;
+    }
 }
 
 // ---------------- Program ----------------
@@ -61,10 +95,14 @@ std::unique_ptr<ASTNode> Parser::ParseFunction() {
     Expect(TokenType::KW_FN, "expected 'fn'");
 
     // return type
-    if (!Match({TokenType::KW_INT, TokenType::KW_CHAR, TokenType::KW_DOUBLE, TokenType::KW_STRING}))
-        throw std::runtime_error("expected return type after 'fn'");
-
-    Token retTok = tokens_[pos_ - 1];
+    Token retTok;
+    if (!Match({TokenType::KW_INT, TokenType::KW_CHAR, TokenType::KW_DOUBLE, TokenType::KW_STRING})) {
+        AddError("expected return type after 'fn'");
+        // use default int token (without consuming)
+        retTok = Token{TokenType::KW_INT, "int", Peek().line, Peek().col};
+    } else {
+        retTok = tokens_[pos_ - 1];
+    }
     auto fnNode = make_node(NodeKind::Function, "Function");
 
     // return type child
@@ -79,19 +117,35 @@ std::unique_ptr<ASTNode> Parser::ParseFunction() {
     if (!Match(TokenType::RPAREN)) {
         // parse argument list
         while (true) {
-            if (!Match({TokenType::KW_INT, TokenType::KW_CHAR, TokenType::KW_DOUBLE, TokenType::KW_STRING}))
-                throw std::runtime_error("expected argument type");
-            Token argTypeTok = tokens_[pos_ - 1];
-            Token argNameTok = Expect(TokenType::IDENTIFIER, "expected argument name");
-            auto argNode = make_node(NodeKind::FuncArg);
-            argNode->children.push_back(MakeTypeNode(argTypeTok));
-            argNode->text = argNameTok.text;
-            // optional [] after arg name
-            if (Match(TokenType::LBRACKET)) {
-                Expect(TokenType::RBRACKET, "expected ']'");
-                argNode->isArray = true;
+            if (!Match({TokenType::KW_INT, TokenType::KW_CHAR, TokenType::KW_DOUBLE, TokenType::KW_STRING})) {
+                AddError("expected argument type");
+                // fallback: assume int, but don't consume token
+                Token argTypeTok{TokenType::KW_INT, "int", Peek().line, Peek().col};
+                // try to recover by not consuming and attempt to parse name
+                Token argNameTok = Expect(TokenType::IDENTIFIER, "expected argument name");
+                auto argNode = make_node(NodeKind::FuncArg);
+                argNode->children.push_back(MakeTypeNode(argTypeTok));
+                argNode->text = argNameTok.text;
+                // optional [] after arg name
+                if (Match(TokenType::LBRACKET)) {
+                    Expect(TokenType::RBRACKET, "expected ']'");
+                    argNode->isArray = true;
+                }
+                fnNode->children.push_back(std::move(argNode));
+            } else {
+                Token argTypeTok = tokens_[pos_ - 1];
+                Token argNameTok = Expect(TokenType::IDENTIFIER, "expected argument name");
+                auto argNode = make_node(NodeKind::FuncArg);
+                argNode->children.push_back(MakeTypeNode(argTypeTok));
+                argNode->text = argNameTok.text;
+                // optional [] after arg name
+                if (Match(TokenType::LBRACKET)) {
+                    Expect(TokenType::RBRACKET, "expected ']'");
+                    argNode->isArray = true;
+                }
+                fnNode->children.push_back(std::move(argNode));
             }
-            fnNode->children.push_back(std::move(argNode));
+
             if (Match(TokenType::COMMA)) continue;
             Expect(TokenType::RPAREN, "expected ')' after arguments");
             break;
@@ -148,7 +202,7 @@ std::unique_ptr<ASTNode> Parser::ParseStatement() {
 std::unique_ptr<ASTNode> Parser::ParseVarDeclList(TokenType firstTypeTok) {
     // consume type
     Expect(firstTypeTok, "expected type");
-    Token typeTok = tokens_[pos_ - 1];
+    Token typeTok = tokens_[ (pos_>0) ? pos_ - 1 : 0 ];
     auto listNode = make_node(NodeKind::VarDeclList, "VarDeclList");
     // store type as first child for convenience
     listNode->children.push_back(MakeTypeNode(typeTok));
@@ -262,7 +316,16 @@ std::unique_ptr<ASTNode> Parser::ParseFor() {
         node->children.push_back(ParseVarDeclList(backTypeTok.type));
     } else {
         // grammar expects Type VarList, but accept empty init (defensive)
-        if (!Match(TokenType::SEMICOLON)) throw std::runtime_error("expected type declaration or ';' in for-init");
+        if (!Match(TokenType::SEMICOLON)) {
+            AddError("expected type declaration or ';' in for-init");
+            // attempt to skip tokens until ';' or ')'
+            while (!IsAtEnd() && Peek().type != TokenType::SEMICOLON && Peek().type != TokenType::RPAREN) Advance();
+            if (Match(TokenType::SEMICOLON)) {
+                // ok, consumed
+            } else {
+                // leave; will be handled by following Expect
+            }
+        }
     }
 
     // condition
@@ -481,7 +544,13 @@ std::unique_ptr<ASTNode> Parser::ParsePrimary() {
         Expect(TokenType::RPAREN, "expected ')'");
         return e;
     }
-    throw std::runtime_error(std::string("unexpected token in expression: ") + Peek().text);
+    // unexpected token in expression -> report and recover by returning literal 0
+    std::ostringstream oss;
+    oss << "unexpected token in expression: '" << Peek().text << "'";
+    AddError(oss.str());
+    // skip the token and return a dummy literal to allow parsing to continue
+    if (!IsAtEnd()) Advance();
+    return make_node(NodeKind::Number, "0");
 }
 
 std::unique_ptr<ASTNode> Parser::ParsePrimaryIdTail(std::unique_ptr<ASTNode> idNode) {
