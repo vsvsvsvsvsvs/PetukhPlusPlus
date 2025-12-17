@@ -72,7 +72,7 @@ struct ASTNode {
   std::string text;
   bool isArray = false;
 
-  std::vector<std::unique_ptr<ASTNode> > children;
+  std::vector<std::unique_ptr<ASTNode>> children;
 };
 
 inline std::unique_ptr<ASTNode> make_node(NodeKind kind, const std::string &text = "") {

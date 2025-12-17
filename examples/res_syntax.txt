@@ -16,16 +16,20 @@ Program: Program
       VarDeclList: VarDeclList
         Type: int
         VarDecl: x
-          CommaExpr: ,
-            Number: 5
-            Assign: =
-              Identifier: y
-              Number: 10
+          Number: 5
+      VarDeclList: VarDeclList
+        Type: int
+        VarDecl: y
+          Number: 10
       If: If
         Binary: <
           Identifier: x
           Identifier: y
         Block: Block
+          VarDeclList: VarDeclList
+            Type: int
+            VarDecl: z
+              Number: 41
           ExprStmt: ExprStmt
             Assign: =
               Identifier: x
@@ -36,6 +40,10 @@ Program: Program
                   CommaExpr: ,
                     Number: 3
                     Number: 7
+          ExprStmt: ExprStmt
+            Assign: =
+              Identifier: z
+              Number: 34
         ElseIf: ElseIf
           Binary: ==
             Identifier: x
@@ -70,6 +78,8 @@ Program: Program
               Binary: +
                 Identifier: x
                 Identifier: i
+          Break: Break
+          Break: Break
       While: While
         Binary: >
           Identifier: x

@@ -1,14 +1,18 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <vector>
+
 #include "lexer/Lexer.h"
 #include "parser/Parser.h"
 #include "parser/ASTPrinter.h"
+#include "semantics/SemanticAnalyzer.h"
 
 int main() {
   const std::string programPath = "../examples/program.petukh";
   const std::string lexerOutPath = "../examples/res_lexer.txt";
   const std::string syntaxOutPath = "../examples/res_syntax.txt";
+  const std::string semanticOutPath = "../examples/res_semantic.txt";
 
   // ---------- Load source ----------
   std::ifstream fin(programPath);
@@ -27,12 +31,11 @@ int main() {
   Lexer lexer(source);
   std::vector<Token> tokens = lexer.Tokenize();
 
-  // Save lexer output
   {
     std::ofstream f(lexerOutPath);
     for (const auto &t: tokens) {
       f << "Line " << t.line << ":" << t.col << "  "
-          << TokenTypeToString(t.type) << "  '" << t.text << "'\n";
+        << TokenTypeToString(t.type) << "  '" << t.text << "'\n";
     }
   }
 
@@ -40,27 +43,50 @@ int main() {
   Parser parser(tokens);
   std::unique_ptr<ASTNode> program = parser.ParseProgram();
 
-  // ---------- Save syntax output ----------
-  std::ofstream fout(syntaxOutPath);
-
-  // Print AST only if there are no syntax errors
-  if (parser.errors_.empty()) {
-    ASTPrinter printer;
-    printer.Print(program.get(), fout);
-    fout << "\n=== No syntax errors ===\n";
-  } else {
-    fout << "=== AST (partial or empty due to errors) ===\n";
-    ASTPrinter printer;
-    if (program)
+  {
+    std::ofstream fout(syntaxOutPath);
+    if (parser.errors_.empty()) {
+      ASTPrinter printer;
       printer.Print(program.get(), fout);
+      fout << "\n=== No syntax errors ===\n";
+    } else {
+      fout << "=== AST (partial or empty due to errors) ===\n";
+      ASTPrinter printer;
+      if (program)
+        printer.Print(program.get(), fout);
 
-    fout << "\n=== Syntax errors ===\n";
-    for (const auto &err: parser.errors_) {
-      fout << err << "\n";
+      fout << "\n=== Syntax errors ===\n";
+      for (const auto &err: parser.errors_) {
+        fout << err << "\n";
+      }
+
+      std::cerr << "Syntax errors detected. See res_syntax.txt.\n";
+      return 1; // stop here — semantic analysis requires valid AST
     }
-
-    std::cerr << "Syntax errors detected. See res_syntax.txt.\n";
   }
 
+  // ---------- Run semantic analyzer ----------
+  SemanticAnalyzer sema;
+  sema.Analyze(program.get());
+
+  const auto &semErrors = sema.GetErrors();
+
+  {
+    std::ofstream fs(semanticOutPath);
+
+    if (semErrors.empty()) {
+      fs << "=== Semantic OK ===\n";
+      std::cout << "No semantic errors.\n";
+    } else {
+      fs << "=== Semantic errors ===\n";
+      for (const auto &e : semErrors) {
+        fs << e << "\n";
+      }
+      std::cerr << "Semantic errors detected. See res_semantic.txt.\n";
+      return 1;
+    }
+  }
+
+  std::cout << "Compilation successful.\n";
   return 0;
 }
