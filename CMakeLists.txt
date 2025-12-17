@@ -4,21 +4,21 @@ project(PetukhPlusPlus)
 set(CMAKE_CXX_STANDARD 20)
 
 add_executable(PetukhPlusPlus
-        main.cpp
+        src/main.cpp
 
-        Token.h
+        src/lexer/Token.h
 
-        Lexer.h
-        Lexer.cpp
+        src/lexer/Lexer.h
+        src/lexer/Lexer.cpp
 
-        Trie.h
-        Trie.cpp
+        src/lexer/Trie.h
+        src/lexer/Trie.cpp
 
-        AST.h
+        src/parser/AST.h
 
-        Parser.h
-        Parser.cpp
+        src/parser/Parser.h
+        src/parser/Parser.cpp
 
-        ASTPrinter.h
-        ASTPrinter.cpp
+        src/parser/ASTPrinter.h
+        src/parser/ASTPrinter.cpp
 )

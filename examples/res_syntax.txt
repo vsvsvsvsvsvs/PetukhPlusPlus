@@ -94,3 +94,5 @@ Program: Program
           Number: 0
       Return: Return
         Identifier: x
+
+=== No syntax errors ===

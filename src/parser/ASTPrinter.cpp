@@ -18,7 +18,7 @@ void ASTPrinter::Print(const ASTNode *node, std::ostream &out, int indent) {
   }
   out << "\n";
 
-  for (auto &child : node->children) {
+  for (auto &child: node->children) {
     Print(child.get(), out, indent + 1);
   }
 }

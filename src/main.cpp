@@ -1,14 +1,14 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include "Lexer.h"
-#include "Parser.h"
-#include "ASTPrinter.h"
+#include "lexer/Lexer.h"
+#include "parser/Parser.h"
+#include "parser/ASTPrinter.h"
 
 int main() {
-  const std::string programPath = "/root/CLionProjects/PetukhPlusPlus/program.petukh";
-  const std::string lexerOutPath = "/root/CLionProjects/PetukhPlusPlus/res_lexer.txt";
-  const std::string syntaxOutPath = "/root/CLionProjects/PetukhPlusPlus/res_syntax.txt";
+  const std::string programPath = "../examples/program.petukh";
+  const std::string lexerOutPath = "../examples/res_lexer.txt";
+  const std::string syntaxOutPath = "../examples/res_syntax.txt";
 
   // ---------- Load source ----------
   std::ifstream fin(programPath);
@@ -30,9 +30,9 @@ int main() {
   // Save lexer output
   {
     std::ofstream f(lexerOutPath);
-    for (const auto &t : tokens) {
+    for (const auto &t: tokens) {
       f << "Line " << t.line << ":" << t.col << "  "
-        << TokenTypeToString(t.type) << "  '" << t.text << "'\n";
+          << TokenTypeToString(t.type) << "  '" << t.text << "'\n";
     }
   }
 
@@ -55,7 +55,7 @@ int main() {
       printer.Print(program.get(), fout);
 
     fout << "\n=== Syntax errors ===\n";
-    for (const auto &err : parser.errors_) {
+    for (const auto &err: parser.errors_) {
       fout << err << "\n";
     }
 

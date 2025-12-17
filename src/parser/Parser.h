@@ -1,8 +1,10 @@
-#pragma once
+#ifndef PARSER_H
+#define PARSER_H
+
 #include <vector>
 #include <string>
 #include <memory>
-#include "Token.h"
+#include "../lexer/Token.h"
 #include "AST.h"
 
 class Parser {
@@ -57,3 +59,5 @@ private:
   size_t pos_;
 
 };
+
+#endif // PARSER_H
