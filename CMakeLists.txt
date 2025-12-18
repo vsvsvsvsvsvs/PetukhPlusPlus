@@ -1,24 +1,40 @@
 cmake_minimum_required(VERSION 4.0)
+
+set(CMAKE_C_COMPILER clang)
+set(CMAKE_CXX_COMPILER clang++)
+
 project(PetukhPlusPlus)
 
 set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+set(CMAKE_OSX_ARCHITECTURES arm64)
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libc++")
 
 add_executable(PetukhPlusPlus
-        main.cpp
+        src/main.cpp
 
-        Token.h
+        src/lexer/Token.h
 
-        Lexer.h
-        Lexer.cpp
+        src/lexer/Lexer.h
+        src/lexer/Lexer.cpp
 
-        Trie.h
-        Trie.cpp
+        src/lexer/Trie.h
+        src/lexer/Trie.cpp
 
-        AST.h
+        src/parser/AST.h
 
-        Parser.h
-        Parser.cpp
+        src/parser/Parser.h
+        src/parser/Parser.cpp
 
-        ASTPrinter.h
-        ASTPrinter.cpp
+        src/parser/ASTPrinter.h
+        src/parser/ASTPrinter.cpp
+        src/semantics/SemanticAnalyzer.h
+        src/semantics/SemanticAnalyzer.cpp
 )
+
+if(APPLE)
+    target_link_libraries(PetukhPlusPlus PRIVATE c++)
+endif()

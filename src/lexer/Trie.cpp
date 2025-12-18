@@ -6,16 +6,16 @@ Trie::Trie() { root = new Node(); }
 
 Trie::~Trie() { FreeNode(root); }
 
-void Trie::FreeNode(const Node* node) {
-  for (const auto& val : node->next | std::views::values) {
+void Trie::FreeNode(const Node *node) {
+  for (const auto &val: node->next | std::views::values) {
     FreeNode(val);
   }
   delete node;
 }
 
-void Trie::Insert(const std::string& word, const int keyword_id) const {
-  Node* cur = root;
-  for (char c : word) {
+void Trie::Insert(const std::string &word, const int keyword_id) const {
+  Node *cur = root;
+  for (char c: word) {
     if (!cur->next.contains(c)) {
       cur->next[c] = new Node();
     }
@@ -25,9 +25,9 @@ void Trie::Insert(const std::string& word, const int keyword_id) const {
   cur->keyword_id = keyword_id;
 }
 
-int Trie::Match(const std::string& word) const {
-  const Node* cur = root;
-  for (char c : word) {
+int Trie::Match(const std::string &word) const {
+  const Node *cur = root;
+  for (char c: word) {
     if (!cur->next.contains(c)) {
       return -1;
     }
