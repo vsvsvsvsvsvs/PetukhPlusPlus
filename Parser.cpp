@@ -214,7 +214,7 @@ std::unique_ptr<ASTNode> Parser::ParseVarDeclList(TokenType firstTypeTok) {
 
         // VarDeclSuffix = '=' Expression ArraySuffix | ArraySuffix | ε
         if (Match(TokenType::ASSIGN)) {
-            varNode->children.push_back(ParseExpression()); // init expression
+            varNode->children.push_back(ParseAssignment()); // init expression
             // optionally array suffix after init
             if (Match(TokenType::LBRACKET)) {
                 varNode->isArray = true;
