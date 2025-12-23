@@ -391,24 +391,32 @@ std::unique_ptr<ASTNode> Parser::ParseExpression() {
 
 // AssignmentExpr = Identifier AssignOrExpr | NonIdExpr
 std::unique_ptr<ASTNode> Parser::ParseAssignment() {
-    // lookahead approach:
-    // if we have IDENTIFIER and next token is ASSIGN -> parse as assignment
-    if (Peek().type == TokenType::IDENTIFIER) {
-        // safe lookahead
-        if (pos_ + 1 < tokens_.size() && tokens_[pos_ + 1].type == TokenType::ASSIGN) {
-            // consume identifier
-            Token idTok = Expect(TokenType::IDENTIFIER, "expected identifier");
-            auto idNode = make_node(NodeKind::Identifier, idTok.text);
-            // consume '='
-            Expect(TokenType::ASSIGN, "expected '=' for assignment");
-            auto as = make_node(NodeKind::Assign, "=");
-            as->children.push_back(std::move(idNode));
-            as->children.push_back(ParseAssignment()); // right associative
-            return as;
-        }
+    // assignment has the lowest precedence except comma,
+    // so first parse normal expression
+    auto lhs = ParseEquality();
+
+    // if no '=' -> it's not assignment
+    if (!Match(TokenType::ASSIGN))
+        return lhs;
+
+    // check lvalue
+    if (lhs->kind != NodeKind::Identifier &&
+        lhs->kind != NodeKind::Index)
+    {
+        AddError("left side of assignment must be variable or array element");
+        // still parse RHS to continue
+        auto rhs = ParseAssignment();
+        auto as = make_node(NodeKind::Assign, "=");
+        as->children.push_back(std::move(lhs));
+        as->children.push_back(std::move(rhs));
+        return as;
     }
-    // otherwise parse as general expression with full precedence (including identifiers)
-    return ParseEquality();
+
+    auto rhs = ParseAssignment(); // right associative
+    auto as = make_node(NodeKind::Assign, "=");
+    as->children.push_back(std::move(lhs));
+    as->children.push_back(std::move(rhs));
+    return as;
 }
 
 std::unique_ptr<ASTNode> Parser::ParseNonIdExpr() {

@@ -5,8 +5,7 @@ fn int sum(int a, int b, int c) {
 fn int main() {
     int x = 5;
     int y = 10;
-    int z[3];
-    z[0] = 1;
+    int z[sum(1, 2, 3)];
     int val = z[2];
     if (sum(0, 1, 2)) {
       val = 1;
@@ -26,7 +25,7 @@ fn int main() {
     }
 
     while (x > 0) {
-        x = x - 1;
+        x = x + z[x];
     }
 
     do {

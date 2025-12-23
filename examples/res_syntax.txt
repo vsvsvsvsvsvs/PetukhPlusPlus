@@ -1,4 +1,3 @@
-=== AST (partial or empty due to errors) ===
 Program: Program
   Function: sum
     Type: int
@@ -25,13 +24,13 @@ Program: Program
       VarDeclList: VarDeclList
         Type: int
         VarDecl: z [array]
-          Number: 3
-      ExprStmt: ExprStmt
-        Index: Index
-          Identifier: z
-          Number: 0
-      ExprStmt: ExprStmt
-        Number: 1
+          Call: Call
+            Identifier: sum
+            CommaExpr: ,
+              CommaExpr: ,
+                Number: 1
+                Number: 2
+              Number: 3
       VarDeclList: VarDeclList
         Type: int
         VarDecl: val
@@ -115,9 +114,11 @@ Program: Program
           ExprStmt: ExprStmt
             Assign: =
               Identifier: x
-              Binary: -
+              Binary: +
                 Identifier: x
-                Number: 1
+                Index: Index
+                  Identifier: z
+                  Identifier: x
       DoWhile: DoWhile
         Block: Block
           ExprStmt: ExprStmt
@@ -132,5 +133,4 @@ Program: Program
       Return: Return
         Identifier: x
 
-=== Syntax errors ===
-Line 9, col 10: expected ';' after expression at '='
+=== No syntax errors ===
