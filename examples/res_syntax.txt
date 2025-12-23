@@ -1,3 +1,4 @@
+=== AST (partial or empty due to errors) ===
 Program: Program
   Function: sum
     Type: int
@@ -5,11 +6,11 @@ Program: Program
       Type: int
     FuncArg: b
       Type: int
+    FuncArg: c
+      Type: int
     Block: Block
       Return: Return
-        Binary: +
-          Identifier: a
-          Identifier: b
+        Number: 1
   Function: main
     Type: int
     Block: Block
@@ -21,6 +22,39 @@ Program: Program
         Type: int
         VarDecl: y
           Number: 10
+      VarDeclList: VarDeclList
+        Type: int
+        VarDecl: z [array]
+          Number: 3
+      ExprStmt: ExprStmt
+        Index: Index
+          Identifier: z
+          Number: 0
+      ExprStmt: ExprStmt
+        Number: 1
+      VarDeclList: VarDeclList
+        Type: int
+        VarDecl: val
+          Index: Index
+            Identifier: z
+            Number: 2
+      If: If
+        Call: Call
+          Identifier: sum
+          CommaExpr: ,
+            CommaExpr: ,
+              Number: 0
+              Number: 1
+            Number: 2
+        Block: Block
+          ExprStmt: ExprStmt
+            Assign: =
+              Identifier: val
+              Number: 1
+      VarDeclList: VarDeclList
+        Type: string
+        VarDecl: ans
+          String: h
       If: If
         Binary: <
           Identifier: x
@@ -31,19 +65,13 @@ Program: Program
             VarDecl: z
               Number: 41
           ExprStmt: ExprStmt
-            Assign: =
-              Identifier: x
-              Binary: +
-                Identifier: x
-                Call: Call
-                  Identifier: sum
-                  CommaExpr: ,
-                    Number: 3
-                    Number: 7
-          ExprStmt: ExprStmt
-            Assign: =
-              Identifier: z
-              Number: 34
+            Call: Call
+              Identifier: sum
+              CommaExpr: ,
+                CommaExpr: ,
+                  Number: 5
+                  Number: 7
+                Number: 1
         ElseIf: ElseIf
           Binary: ==
             Identifier: x
@@ -65,7 +93,7 @@ Program: Program
             Number: 0
         Binary: <
           Identifier: i
-          Number: 3
+          Number: 5
         Assign: =
           Identifier: i
           Binary: +
@@ -78,7 +106,6 @@ Program: Program
               Binary: +
                 Identifier: x
                 Identifier: i
-          Break: Break
           Break: Break
       While: While
         Binary: >
@@ -105,4 +132,5 @@ Program: Program
       Return: Return
         Identifier: x
 
-=== No syntax errors ===
+=== Syntax errors ===
+Line 9, col 10: expected ';' after expression at '='

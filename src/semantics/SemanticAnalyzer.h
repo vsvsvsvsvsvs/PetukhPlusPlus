@@ -20,8 +20,10 @@ enum class TypeKind {
 
 struct Symbol {
   std::string name;
-  TypeKind type;
-  bool isArray = false;
+  TypeKind type;          // return type
+  bool isArray = false, isFunction = false;
+  std::vector<TypeKind> paramTypes;
+  std::vector<bool> paramIsArray;
 };
 
 class Scope {
@@ -45,6 +47,7 @@ class SemanticAnalyzer {
   Scope *currentScope = nullptr;
   std::vector<std::string> errors_;
 
+  bool inFunction = false;
   // for tracking loops
   int loopDepth = 0;
 
@@ -65,6 +68,8 @@ class SemanticAnalyzer {
 
   void DeclareVar(const ASTNode *v, TypeKind t);
   void CheckVarDeclList(const ASTNode *node);
+
+  void CollectArgs(ASTNode* n, std::vector<ASTNode*>& out);
 };
 
 #endif
