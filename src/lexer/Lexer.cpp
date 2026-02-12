@@ -113,12 +113,24 @@ Token Lexer::Identifier() {
 }
 
 Token Lexer::Number() {
-  const int startCol = col_;
-  std::string text;
+  int start_col = col_;
+  std::string value;
+
+  // Целая часть
   while (!IsEnd() && isdigit(Peek())) {
-    text += Get();
+    value += Get();
   }
-  return Make(TokenType::NUMBER, text, startCol);
+
+  // Дробная часть
+  if (!IsEnd() && Peek() == '.' && isdigit(Peek(1))) {
+    value += Get();  // съели '.'
+
+    while (!IsEnd() && isdigit(Peek())) {
+      value += Get();
+    }
+  }
+
+  return Make(TokenType::NUMBER, value, start_col);
 }
 
 Token Lexer::StringLiteral() {
