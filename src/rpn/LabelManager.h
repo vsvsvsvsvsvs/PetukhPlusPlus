@@ -6,7 +6,7 @@
 class LabelManager {
   int counter = 0;
 
-public:
+ public:
   std::string NewLabel() {
     return "L" + std::to_string(counter++);
   }

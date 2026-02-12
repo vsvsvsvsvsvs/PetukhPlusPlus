@@ -3,28 +3,28 @@
 #include <sstream>
 #include <vector>
 
-#include "Lexer.h"
-#include "Parser.h"
-#include "ASTPrinter.h"
-#include "SemanticAnalyzer.h"
-#include "PolizGenerator.h"
-#include "PolizInstruction.h"
+#include "lexer/Lexer.h"
+#include "parser/Parser.h"
+#include "parser/ASTPrinter.h"
+#include "semantics/SemanticAnalyzer.h"
+#include "rpn/RPNGenerator.h"
+#include "rpn/RPNInstruction.h"
 
 int main() {
   const std::string programPath =
-      "/root/CLionProjects/PetukhPlusPlus/program.petukh";
+      "../examples/program.petukh";
 
   const std::string lexerOutPath =
-      "/root/CLionProjects/PetukhPlusPlus/res_lexer.txt";
+      "../examples/res_lexer.txt";
 
   const std::string syntaxOutPath =
-      "/root/CLionProjects/PetukhPlusPlus/res_syntax.txt";
+      "../examples/res_syntax.txt";
 
   const std::string semanticOutPath =
-      "/root/CLionProjects/PetukhPlusPlus/res_semantic.txt";
+      "../examples/res_semantic.txt";
 
   const std::string polizOutPath =
-      "/root/CLionProjects/PetukhPlusPlus/res_poliz.txt";
+      "../examples/res_poliz.txt";
 
 
   // ================= Load source =================
@@ -106,7 +106,7 @@ int main() {
 
 
   // ================= POLIZ =================
-  PolizGenerator generator;
+  RPNGenerator generator;
   auto poliz = generator.Generate(program.get());
 
   {

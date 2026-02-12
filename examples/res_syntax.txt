@@ -1,6 +1,6 @@
 Program: Program
   Function: sum
-    Type: int
+    Type: string
     FuncArg: a
       Type: int
     FuncArg: b
@@ -9,7 +9,24 @@ Program: Program
       Type: int
     Block: Block
       Return: Return
-        Number: 1
+        String: 324
+      VarDeclList: VarDeclList
+        Type: int
+        VarDecl: x
+  Function: sumsum
+    Type: string
+    FuncArg: a
+      Type: string
+    FuncArg: b
+      Type: int
+    FuncArg: c
+      Type: int
+    Block: Block
+      Return: Return
+        String: 324
+      VarDeclList: VarDeclList
+        Type: int
+        VarDecl: x
   Function: main
     Type: int
     Block: Block
@@ -23,114 +40,49 @@ Program: Program
           Number: 10
       VarDeclList: VarDeclList
         Type: int
-        VarDecl: z [array]
+        VarDecl: val
+          Number: 0
+      If: If
+        Binary: ==
           Call: Call
             Identifier: sum
             CommaExpr: ,
               CommaExpr: ,
+                Number: 0
                 Number: 1
-                Number: 2
-              Number: 3
-      VarDeclList: VarDeclList
-        Type: int
-        VarDecl: val
-          Index: Index
-            Identifier: z
-            Number: 2
-      If: If
-        Call: Call
-          Identifier: sum
-          CommaExpr: ,
-            CommaExpr: ,
-              Number: 0
               Number: 1
-            Number: 2
+          String: kek
         Block: Block
           ExprStmt: ExprStmt
             Assign: =
               Identifier: val
               Number: 1
       VarDeclList: VarDeclList
-        Type: string
-        VarDecl: ans
-          String: h
-      If: If
-        Binary: <
-          Identifier: x
-          Identifier: y
-        Block: Block
-          VarDeclList: VarDeclList
-            Type: int
-            VarDecl: z
-              Number: 41
-          ExprStmt: ExprStmt
-            Call: Call
-              Identifier: sum
-              CommaExpr: ,
-                CommaExpr: ,
-                  Number: 5
-                  Number: 7
-                Number: 1
-        ElseIf: ElseIf
-          Binary: ==
-            Identifier: x
-            Identifier: y
-          Block: Block
-            ExprStmt: ExprStmt
-              Assign: =
-                Identifier: x
-                Number: 0
-        Block: Block
-          ExprStmt: ExprStmt
-            Assign: =
-              Identifier: x
-              Number: 1
+        Type: int
+        VarDecl: t
       For: For
         VarDeclList: VarDeclList
           Type: int
-          VarDecl: i
-            Number: 0
-        Binary: <
-          Identifier: i
-          Number: 5
-        Assign: =
-          Identifier: i
-          Binary: +
-            Identifier: i
+          VarDecl: z
             Number: 1
-        Block: Block
-          ExprStmt: ExprStmt
-            Assign: =
-              Identifier: x
-              Binary: +
-                Identifier: x
-                Identifier: i
-          Break: Break
-      While: While
-        Binary: >
+        Assign: =
+          Identifier: t
           Identifier: x
-          Number: 0
         Block: Block
-          ExprStmt: ExprStmt
-            Assign: =
-              Identifier: x
-              Binary: +
-                Identifier: x
-                Index: Index
-                  Identifier: z
-                  Identifier: x
-      DoWhile: DoWhile
-        Block: Block
-          ExprStmt: ExprStmt
-            Assign: =
-              Identifier: y
-              Binary: -
-                Identifier: y
-                Number: 1
-        Binary: >
-          Identifier: y
-          Number: 0
+          VarDeclList: VarDeclList
+            Type: int
+            VarDecl: x
+      ExprStmt: ExprStmt
+        Binary: ==
+          Binary: +
+            Call: Call
+              Identifier: main
+            Call: Call
+              Identifier: main
+          Call: Call
+            Identifier: main
       Return: Return
-        Identifier: x
+        Call: Call
+          Identifier: main
 
 === No syntax errors ===

@@ -39,8 +39,9 @@ struct Instruction {
   OpCode op;
   std::string arg;
 
-  Instruction(OpCode o, const std::string& a = "")
-      : op(o), arg(a) {}
+  Instruction(OpCode o, const std::string &a = "")
+    : op(o), arg(a) {
+  }
 };
 
 
