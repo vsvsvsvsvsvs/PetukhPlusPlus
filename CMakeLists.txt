@@ -35,6 +35,9 @@ add_executable(PetukhPlusPlus
         src/semantics/SemanticAnalyzer.cpp
 
         src/rpn/RPNGenerator.cpp
+        src/vm/Value.h
+        src/vm/VM.h
+        src/vm/VM.cpp
 )
 
 if(APPLE)

@@ -1,88 +1,74 @@
 Program: Program
-  Function: sum
-    Type: string
-    FuncArg: a
-      Type: int
-    FuncArg: b
-      Type: int
-    FuncArg: c
-      Type: int
-    Block: Block
-      Return: Return
-        String: 324
-      VarDeclList: VarDeclList
-        Type: int
-        VarDecl: x
-  Function: sumsum
-    Type: string
-    FuncArg: a
-      Type: string
-    FuncArg: b
-      Type: int
-    FuncArg: c
-      Type: int
-    Block: Block
-      Return: Return
-        String: 324
-      VarDeclList: VarDeclList
-        Type: int
-        VarDecl: x
   Function: main
     Type: int
     Block: Block
       VarDeclList: VarDeclList
         Type: int
-        VarDecl: x
-          Number: 5
-      VarDeclList: VarDeclList
-        Type: int
-        VarDecl: y
-          Number: 10
-      VarDeclList: VarDeclList
-        Type: int
-        VarDecl: val
-          Number: 0
-      If: If
-        Binary: ==
+        VarDecl: n
           Call: Call
-            Identifier: sum
-            CommaExpr: ,
-              CommaExpr: ,
-                Number: 0
-                Number: 1
-              Number: 1
-          String: kek
-        Block: Block
-          ExprStmt: ExprStmt
-            Assign: =
-              Identifier: val
-              Number: 1
+            Identifier: inputInt
       VarDeclList: VarDeclList
         Type: int
-        VarDecl: t
+        VarDecl: a [array]
+          Identifier: n
       For: For
         VarDeclList: VarDeclList
           Type: int
-          VarDecl: z
-            Number: 1
+          VarDecl: i
+            Number: 0
+        Binary: <
+          Identifier: i
+          Identifier: n
         Assign: =
-          Identifier: t
-          Identifier: x
-        Block: Block
-          VarDeclList: VarDeclList
-            Type: int
-            VarDecl: x
-      ExprStmt: ExprStmt
-        Binary: ==
+          Identifier: i
           Binary: +
+            Identifier: i
+            Number: 1
+        Block: Block
+          ExprStmt: ExprStmt
+            Assign: =
+              Index: Index
+                Identifier: a
+                Identifier: i
+              Call: Call
+                Identifier: inputInt
+          ExprStmt: ExprStmt
             Call: Call
-              Identifier: main
-            Call: Call
-              Identifier: main
-          Call: Call
-            Identifier: main
-      Return: Return
-        Call: Call
-          Identifier: main
+              Identifier: printInt
+              Index: Index
+                Identifier: a
+                Identifier: i
+      VarDeclList: VarDeclList
+        Type: int
+        VarDecl: tree [array]
+          Binary: *
+            Number: 2
+            Identifier: n
+      ExprStmt: ExprStmt
+        Assign: =
+          Identifier: i
+          Identifier: n
+      For: For
+        Binary: <
+          Identifier: i
+          Binary: *
+            Number: 2
+            Identifier: n
+        Assign: =
+          Identifier: i
+          Binary: +
+            Identifier: i
+            Number: 1
+        Block: Block
+          ExprStmt: ExprStmt
+            Assign: =
+              Index: Index
+                Identifier: tree
+                Identifier: i
+              Index: Index
+                Identifier: a
+                Binary: -
+                  Identifier: i
+                  Identifier: n
 
 === No syntax errors ===

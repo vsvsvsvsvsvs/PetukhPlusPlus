@@ -3,6 +3,7 @@
 
 enum class OpCode {
   PUSH_INT,
+  PUSH_DOUBLE,
   PUSH_STRING,
 
   LOAD,
@@ -10,6 +11,7 @@ enum class OpCode {
 
   LOAD_INDEX,
   STORE_INDEX,
+  NEW_ARRAY,
 
   ADD,
   SUB,
@@ -39,15 +41,14 @@ struct Instruction {
   OpCode op;
   std::string arg;
 
-  Instruction(OpCode o, const std::string &a = "")
-    : op(o), arg(a) {
-  }
+  Instruction(OpCode o, const std::string &a = "") : op(o), arg(a) {}
 };
 
 
 inline std::string OpCodeToString(OpCode op) {
   switch (op) {
     case OpCode::PUSH_INT: return "PUSH_INT";
+    case OpCode::PUSH_DOUBLE: return "PUSH_DOUBLE";
     case OpCode::PUSH_STRING: return "PUSH_STRING";
 
     case OpCode::LOAD: return "LOAD";
@@ -55,6 +56,7 @@ inline std::string OpCodeToString(OpCode op) {
 
     case OpCode::LOAD_INDEX: return "LOAD_INDEX";
     case OpCode::STORE_INDEX: return "STORE_INDEX";
+    case OpCode::NEW_ARRAY: return "NEW_ARRAY";
 
     case OpCode::ADD: return "ADD";
     case OpCode::SUB: return "SUB";

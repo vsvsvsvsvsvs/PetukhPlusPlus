@@ -9,6 +9,7 @@
 #include "semantics/SemanticAnalyzer.h"
 #include "rpn/RPNGenerator.h"
 #include "rpn/RPNInstruction.h"
+#include "vm/VM.h"
 
 int main() {
   const std::string programPath =
@@ -128,6 +129,7 @@ int main() {
 
   std::cout << "Compilation successful.\n";
   std::cout << "POLIZ written to res_poliz.txt\n";
-
+  VM vm(poliz);
+  vm.Run();
   return 0;
 }

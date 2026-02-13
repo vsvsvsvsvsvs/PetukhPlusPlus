@@ -1,5 +1,14 @@
 #include "SemanticAnalyzer.h"
 #include <sstream>
+#include <cctype>
+
+// helper: is numeric literal floating (contains '.' or 'e' / 'E')
+static bool IsFloatingLiteral(const std::string &s) {
+  for (char c : s) {
+    if (c == '.' || c == 'e' || c == 'E') return true;
+  }
+  return false;
+}
 
 // =============================
 // Scope
@@ -76,7 +85,36 @@ TypeKind SemanticAnalyzer::NodeToType(const ASTNode *t) {
 void SemanticAnalyzer::Analyze(ASTNode *root) {
   currentScope = new Scope(nullptr);
 
-  // pre-declare functions (first pass)
+  // --- predeclare builtin functions (I/O) ---
+  {
+    Symbol s;
+
+    s = Symbol{"printInt", TypeKind::VOID, false, true};
+    s.paramTypes = { TypeKind::INT }; s.paramIsArray = { false };
+    currentScope->Declare(s);
+
+    s = Symbol{"printDouble", TypeKind::VOID, false, true};
+    s.paramTypes = { TypeKind::DOUBLE }; s.paramIsArray = { false };
+    currentScope->Declare(s);
+
+    s = Symbol{"printStr", TypeKind::VOID, false, true};
+    s.paramTypes = { TypeKind::STRING }; s.paramIsArray = { false };
+    currentScope->Declare(s);
+
+    s = Symbol{"inputInt", TypeKind::INT, false, true};
+    s.paramTypes = {}; s.paramIsArray = {};
+    currentScope->Declare(s);
+
+    s = Symbol{"inputDouble", TypeKind::DOUBLE, false, true};
+    s.paramTypes = {}; s.paramIsArray = {};
+    currentScope->Declare(s);
+
+    s = Symbol{"inputStr", TypeKind::STRING, false, true};
+    s.paramTypes = {}; s.paramIsArray = {};
+    currentScope->Declare(s);
+  }
+
+  // pre-declare functions (first pass) from AST
   for (auto &child: root->children) {
     if (child->kind == NodeKind::Function) {
       auto fnName = child->text;
@@ -145,16 +183,11 @@ void SemanticAnalyzer::CheckVarDeclList(const ASTNode *node) {
       if (declared == TypeKind::UNKNOWN || initType == TypeKind::UNKNOWN)
         continue;
 
-      // // ---- STRING: строго только string ----
-      // if (declared == TypeKind::STRING || initType == TypeKind::STRING) {
-      //   if (declared != TypeKind::STRING || initType != TypeKind::STRING)
-      //     Error("cannot assign non-string to string");
-      //   continue;
-      // }
+      // allow implicit int -> double conversion for initializer
+      if (declared == initType) continue;
+      if (declared == TypeKind::DOUBLE && initType == TypeKind::INT) continue;
 
-      // ---- обычная строгая проверка ----
-      if (declared != initType)
-        Error("initializer type mismatch");
+      Error("initializer type mismatch");
     }
   }
 }
@@ -166,21 +199,25 @@ void SemanticAnalyzer::CheckVarDeclList(const ASTNode *node) {
 TypeKind SemanticAnalyzer::CheckExpression(const ASTNode *node) {
   switch (node->kind) {
     case NodeKind::Number:
+      // detect floating literal
+      if (IsFloatingLiteral(node->text)) return TypeKind::DOUBLE;
       return TypeKind::INT;
 
     case NodeKind::String:
       return TypeKind::STRING;
 
     case NodeKind::Identifier: {
-      auto s = currentScope->Lookup(node->text);
-      if (s->isFunction) {
-        Error("Function used as value: " + node->text);
-      }
-      if (!s) {
+      auto opt = currentScope->Lookup(node->text);
+      if (!opt) {
         Error("Undeclared variable: " + node->text);
         return TypeKind::UNKNOWN;
       }
-      return s->type;
+      Symbol s = *opt;
+      if (s.isFunction) {
+        Error("Function used as value: " + node->text);
+        return TypeKind::UNKNOWN;
+      }
+      return s.type;
     }
 
     case NodeKind::Unary:
@@ -200,7 +237,9 @@ TypeKind SemanticAnalyzer::CheckExpression(const ASTNode *node) {
       auto lt = CheckExpression(lhs);
       auto rt = CheckExpression(rhs);
 
-      if (lt != rt && lt != TypeKind::UNKNOWN && rt != TypeKind::UNKNOWN)
+      // allow int -> double
+      if (lt != rt && !(lt == TypeKind::DOUBLE && rt == TypeKind::INT)
+          && lt != TypeKind::UNKNOWN && rt != TypeKind::UNKNOWN)
         Error("Assignment type mismatch");
 
       return lt;
@@ -218,12 +257,12 @@ TypeKind SemanticAnalyzer::CheckExpression(const ASTNode *node) {
       // ---------- RELATIONAL + EQUALITY ----------
       if (op == "<" || op == "<=" || op == ">" || op == ">=" ||
           op == "==" || op == "!=") {
-        // числа сравнивать можно
+        // numeric comparisons allowed between int/double
         if ((l == TypeKind::INT || l == TypeKind::DOUBLE) &&
             (r == TypeKind::INT || r == TypeKind::DOUBLE))
           return TypeKind::INT;
 
-        // строки == и != можно, если надо — скажи, включу
+        // string == and != allowed
         if (l == TypeKind::STRING && r == TypeKind::STRING && (op == "==" || op == "!="))
           return TypeKind::INT;
 
@@ -264,8 +303,8 @@ TypeKind SemanticAnalyzer::CheckExpression(const ASTNode *node) {
         Error("Array index must be int");
 
       if (base->kind == NodeKind::Identifier) {
-        auto s = currentScope->Lookup(base->text);
-        if (s && !s->isArray)
+        auto sOpt = currentScope->Lookup(base->text);
+        if (sOpt && !sOpt->isArray)
           Error("Indexing non-array variable: " + base->text);
       }
 
@@ -283,30 +322,31 @@ TypeKind SemanticAnalyzer::CheckExpression(const ASTNode *node) {
         return TypeKind::UNKNOWN;
       }
 
-      auto s = currentScope->Lookup(callee->text);
-      if (!s->isFunction) {
-        Error("Call of non-function: " + callee->text);
-      }
-      if (!s) {
+      auto sOpt = currentScope->Lookup(callee->text);
+      if (!sOpt) {
         Error("Call to undeclared function: " + callee->text);
+        return TypeKind::UNKNOWN;
+      }
+      Symbol s = *sOpt;
+      if (!s.isFunction) {
+        Error("Call of non-function: " + callee->text);
         return TypeKind::UNKNOWN;
       }
 
       std::vector<ASTNode *> args;
 
-      // ✔ старое поведение: дети [1..n-1] = аргументы
-      // ✔ новое поведение: грамматика даёт один CommaExpr
+      // old behaviour: children [1..n-1] = arguments
       if (node->children.size() > 1) {
         auto argRoot = node->children[1].get();
         CollectArgs(const_cast<ASTNode *>(argRoot), args);
       }
 
       // ---------- CHECK ARG COUNT ----------
-      if (args.size() != s->paramTypes.size()) {
+      if (args.size() != s.paramTypes.size()) {
         std::ostringstream oss;
         oss << "wrong number of arguments in call to "
             << callee->text
-            << " (expected " << s->paramTypes.size()
+            << " (expected " << s.paramTypes.size()
             << ", got " << args.size() << ")";
         Error(oss.str());
       }
@@ -315,18 +355,21 @@ TypeKind SemanticAnalyzer::CheckExpression(const ASTNode *node) {
       for (size_t i = 0; i < args.size(); i++) {
         auto t = CheckExpression(args[i]);
 
-        if (i < s->paramTypes.size() &&
-            t != s->paramTypes[i] &&
-            t != TypeKind::UNKNOWN) {
-          std::ostringstream oss;
-          oss << "argument " << (i + 1)
-              << " type mismatch in call to "
-              << callee->text;
-          Error(oss.str());
+        if (i < s.paramTypes.size()) {
+          // allow implicit int -> double conversion for params
+          if (t != s.paramTypes[i] &&
+              !(s.paramTypes[i] == TypeKind::DOUBLE && t == TypeKind::INT) &&
+              t != TypeKind::UNKNOWN) {
+            std::ostringstream oss;
+            oss << "argument " << (i + 1)
+                << " type mismatch in call to "
+                << callee->text;
+            Error(oss.str());
+          }
         }
       }
 
-      return s->type;
+      return s.type;
     }
 
     default:
@@ -361,7 +404,8 @@ void SemanticAnalyzer::CheckStatement(const ASTNode *node) {
       }
       if (!node->children.empty()) {
         auto t = CheckExpression(node->children[0].get());
-        if (t != currentReturnType) {
+        if (t != currentReturnType &&
+            !(currentReturnType == TypeKind::DOUBLE && t == TypeKind::INT)) {
           Error("Return type mismatch");
         }
       } else if (currentReturnType != TypeKind::VOID)

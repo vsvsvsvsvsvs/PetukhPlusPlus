@@ -1,4 +1,12 @@
 #include "RPNGenerator.h"
+#include <cctype>
+
+static bool IsFloatingLiteral(const std::string &s) {
+  for (char c : s) {
+    if (c == '.' || c == 'e' || c == 'E') return true;
+  }
+  return false;
+}
 
 std::vector<Instruction> RPNGenerator::Generate(ASTNode *root) {
   code_.clear();
@@ -30,12 +38,28 @@ void RPNGenerator::GenNode(ASTNode *node) {
 }
 
 void RPNGenerator::GenFunction(ASTNode *node) {
+  // function label
   code_.emplace_back(OpCode::LABEL, node->text);
 
-  for (auto &child: node->children)
-    GenStatement(child.get());
+  // collect parameter names (children[1..n-2]) — child 0 is return type, last child is body
+  std::vector<std::string> paramNames;
+  for (size_t i = 1; i + 1 < node->children.size(); ++i) {
+    paramNames.push_back(node->children[i]->text);
+  }
 
-  // добавляем RET только если нет явного return
+  // At function entry arguments are on the stack in call order (arg0, arg1, ...).
+  // To bind them to local names we emit STORE for parameters in reverse order so
+  // the top of stack (last argument) goes to the last parameter.
+  for (int i = static_cast<int>(paramNames.size()) - 1; i >= 0; --i) {
+    code_.emplace_back(OpCode::STORE, paramNames[i]);
+  }
+
+  // generate body (the last child)
+  if (!node->children.empty()) {
+    GenStatement(node->children.back().get());
+  }
+
+  // add RET if not present at the end
   if (code_.empty() || code_.back().op != OpCode::RET)
     code_.emplace_back(OpCode::RET);
 }
@@ -61,16 +85,25 @@ void RPNGenerator::GenStatement(ASTNode *node) {
         auto *var = node->children[i].get();
 
         if (!var->children.empty()) {
-          GenExpression(var->children[0].get());
-          code_.emplace_back(OpCode::STORE, var->text);
+          // if it's an array declaration (isArray==true) — create array
+          if (var->isArray) {
+            // child 0 is the size expression
+            GenExpression(var->children[0].get());
+            code_.emplace_back(OpCode::NEW_ARRAY);
+            code_.emplace_back(OpCode::STORE, var->text);
+          } else {
+            GenExpression(var->children[0].get());
+            code_.emplace_back(OpCode::STORE, var->text);
+          }
         }
       }
       break;
 
     case NodeKind::Assign:
-      GenExpression(node->children[1].get());
-      code_.emplace_back(OpCode::STORE,
-                         node->children[0]->text);
+      // handled in GenExpression (assignment may appear inside expressions)
+      // but if assignment appears as a statement we still need to generate it
+      if (!node->children.empty())
+        GenExpression(node);
       break;
 
     case NodeKind::If:
@@ -210,13 +243,17 @@ void RPNGenerator::GenIf(ASTNode *node) {
 }
 
 
+
 void RPNGenerator::GenExpression(ASTNode *node) {
   if (!node)
     return;
 
   switch (node->kind) {
     case NodeKind::Number:
-      code_.emplace_back(OpCode::PUSH_INT, node->text);
+      if (IsFloatingLiteral(node->text))
+        code_.emplace_back(OpCode::PUSH_DOUBLE, node->text);
+      else
+        code_.emplace_back(OpCode::PUSH_INT, node->text);
       break;
 
     case NodeKind::String:
@@ -262,15 +299,37 @@ void RPNGenerator::GenExpression(ASTNode *node) {
     }
 
     case NodeKind::Index:
+      // push array, then index, then LOAD_INDEX will consume them
       GenExpression(node->children[0].get());
       GenExpression(node->children[1].get());
       code_.emplace_back(OpCode::LOAD_INDEX);
       break;
 
     case NodeKind::Assign:
-      GenExpression(node->children[1].get());
-      code_.emplace_back(OpCode::STORE,
-                         node->children[0]->text);
+      // assignment could be either to identifier or to index
+      // evaluate RHS first (so it sits under array/index if needed)
+      if (node->children[0]->kind == NodeKind::Index) {
+        // special-case: a simple variable index like pref[i]
+        auto *idxNode = node->children[0].get();
+        auto *arrExpr = idxNode->children[0].get();
+        auto *indexExpr = idxNode->children[1].get();
+
+        if (arrExpr->kind == NodeKind::Identifier) {
+          // emit: RHS, index, STORE_INDEX <varname>
+          GenExpression(node->children[1].get());   // RHS value
+          GenExpression(indexExpr);                 // index
+          code_.emplace_back(OpCode::STORE_INDEX, arrExpr->text);
+        } else {
+          // fallback to previous behaviour: rhs, array, index, STORE_INDEX
+          GenExpression(node->children[1].get());
+          GenExpression(arrExpr);
+          GenExpression(indexExpr);
+          code_.emplace_back(OpCode::STORE_INDEX);
+        }
+      } else {
+        GenExpression(node->children[1].get());
+        code_.emplace_back(OpCode::STORE, node->children[0]->text);
+      }
       break;
 
     case NodeKind::CommaExpr:
