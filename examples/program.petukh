@@ -1,10 +1,36 @@
 fn int main() {
-    int x = 0;
-    while (1) {
-        x = x + 1;
-        if (vsuprun()) {
-            printInt(x);
-            break;
+    int a = inputInt();
+    int b = inputInt();
+    int c = inputInt();
+    int d2 = b * b - 4 * a * c;
+    if (d2 < 0) {
+        printStr("No solutions");
+        return 0;
+    }
+    double d = 0;
+    if (d2 > 0) {
+        double l = 0;
+        double r = d2;
+        while (r - l > 0.01) {
+             double m = (l + r) / 2.0;
+             if (m * m >= d2) {
+                 r = m;
+             }
+             else {
+                 l = m;
+             }
         }
+    d = r;
+    }
+    if (d == 0) {
+        double x = -b / (2 * a);
+        printDouble(x);
+    }
+    else {
+        double x1 = (-b - d) / (2 * a);
+        double x2 = (-b + d) / (2 * a);
+        printDouble(x1);
+        printStr(" ");
+        printDouble(x2);
     }
 }
