@@ -60,8 +60,10 @@ void RPNGenerator::GenFunction(ASTNode *node) {
   }
 
   // add RET if not present at the end
-  if (code_.empty() || code_.back().op != OpCode::RET)
+  if (code_.empty() || code_.back().op != OpCode::RET) {
+    code_.emplace_back(OpCode::PUSH_INT, "0");
     code_.emplace_back(OpCode::RET);
+  }
 }
 
 void RPNGenerator::GenStatement(ASTNode *node) {

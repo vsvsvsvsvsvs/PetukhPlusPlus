@@ -1,3 +1,0 @@
-fn int main() {
-  printInt(binxor(4, 1));
-}

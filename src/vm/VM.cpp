@@ -108,11 +108,24 @@ int VM::Run() {
       }
 
       case OpCode::RET: {
-        if (call_stack_.empty()) return 0; // nothing to return to
+        // A function's return value is expected to be on top of the stack.
+        // We pop it, tear down the stack frame, and then push it back for the caller.
+        Value returnValue = Pop();
+
+        // Check if we are returning from the top-level 'main' function.
+        if (call_stack_.size() <= 1) { // Only the sentinel frame is left
+          call_stack_.clear();
+          return returnValue.AsInt(); // Exit program with the return code
+        }
+
+        // Pop the current function's call frame.
         Frame fr = std::move(call_stack_.back());
         call_stack_.pop_back();
-        // if we've reached bottom sentinel frame -> exit
-        if (call_stack_.empty()) return 0;
+
+        // Push the preserved return value onto the caller's stack.
+        Push(returnValue);
+
+        // Jump back to the caller's instruction pointer.
         ip = fr.ret_ip;
         break;
       }

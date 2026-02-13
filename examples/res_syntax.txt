@@ -1,4 +1,13 @@
 Program: Program
+  Function: pohuy
+    Type: int
+    Block: Block
+      Return: Return
+        Number: 2
+      ExprStmt: ExprStmt
+        Call: Call
+          Identifier: printStr
+          String: GOVNO
   Function: main
     Type: int
     Block: Block
@@ -6,9 +15,6 @@ Program: Program
         Call: Call
           Identifier: printInt
           Call: Call
-            Identifier: binxor
-            CommaExpr: ,
-              Number: 4
-              Number: 1
+            Identifier: pohuy
 
 === No syntax errors ===
