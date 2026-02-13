@@ -1,23 +1,8 @@
 === POLIZ ===
 
 0: LABEL main
-1: PUSH_INT 0
-2: STORE x
-3: LABEL L0
-4: PUSH_INT 1
-5: JZ L1
-6: LOAD x
-7: PUSH_INT 1
-8: ADD
-9: STORE x
-10: CALL vsuprun
-11: JZ L3
-12: LOAD x
-13: CALL printInt
-14: JMP L1
-15: JMP L2
-16: LABEL L3
-17: LABEL L2
-18: JMP L0
-19: LABEL L1
-20: RET
+1: PUSH_INT 4
+2: PUSH_INT 1
+3: CALL binxor
+4: CALL printInt
+5: RET

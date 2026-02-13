@@ -2,27 +2,13 @@ Program: Program
   Function: main
     Type: int
     Block: Block
-      VarDeclList: VarDeclList
-        Type: int
-        VarDecl: x
-          Number: 0
-      While: While
-        Number: 1
-        Block: Block
-          ExprStmt: ExprStmt
-            Assign: =
-              Identifier: x
-              Binary: +
-                Identifier: x
-                Number: 1
-          If: If
-            Call: Call
-              Identifier: vsuprun
-            Block: Block
-              ExprStmt: ExprStmt
-                Call: Call
-                  Identifier: printInt
-                  Identifier: x
-              Break: Break
+      ExprStmt: ExprStmt
+        Call: Call
+          Identifier: printInt
+          Call: Call
+            Identifier: binxor
+            CommaExpr: ,
+              Number: 4
+              Number: 1
 
 === No syntax errors ===

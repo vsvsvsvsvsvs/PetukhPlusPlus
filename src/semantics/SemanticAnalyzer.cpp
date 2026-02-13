@@ -116,6 +116,10 @@ void SemanticAnalyzer::Analyze(ASTNode *root) {
     s = Symbol{"vsuprun", TypeKind::INT, false, true};
     s.paramTypes = {}; s.paramIsArray = {};
     currentScope->Declare(s);
+
+    s = Symbol{"binxor", TypeKind::INT, false, true};
+    s.paramTypes = { TypeKind::INT, TypeKind::INT }; s.paramIsArray = { false, false };
+    currentScope->Declare(s);
   }
 
   // pre-declare functions (first pass) from AST

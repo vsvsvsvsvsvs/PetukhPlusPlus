@@ -349,7 +349,7 @@ void VM::HandleUnaryOp(OpCode op) {
 
 bool VM::IsBuiltin(const std::string &name) const {
   return name == "printInt" || name == "printStr" || name == "printDouble" ||
-         name == "inputInt" || name == "inputStr" || name == "inputDouble" || name == "vsuprun";
+         name == "inputInt" || name == "inputStr" || name == "inputDouble" || name == "vsuprun" || name == "binxor";
 }
 
 void VM::CallBuiltin(const std::string &name) {
@@ -373,5 +373,18 @@ void VM::CallBuiltin(const std::string &name) {
     Push(Value::MakeString(s));
   } else if (name == "vsuprun") {
     Push(Value::MakeInt(1.0 * clock() / CLOCKS_PER_SEC >= 1.95));
+  } else if (name == "binxor") {
+    Value a = Pop(), b = Pop();
+    auto BinXor = [&](auto&& self, int64_t base, int64_t power) -> int {
+      if (power == 0) {
+        return 0;
+      } else if (power & 1) {
+        return self(self, base, power - 1) ^ base;
+      } else {
+        int res = self(self, base, power / 2);
+        return (res ^ res);
+      }
+    };
+    Push(Value::MakeInt(BinXor(BinXor, b.AsInt(), a.AsInt())));
   }
 }
