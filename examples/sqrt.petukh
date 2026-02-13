@@ -1,0 +1,23 @@
+fn double sqrt(double a) {
+    if (a <= 0) {
+        return a;
+    }
+    double l = 0;
+    double r = a;
+    while (r - l > 0.001) {
+        double m = (l + r) / 2;
+        if (m * m >= a) {
+            r = m;
+        }
+        else {
+            l = m;
+        }
+    }
+    return r;
+}
+
+fn int main() {
+    double n = inputDouble();
+    double res = sqrt(n);
+    printDouble(res);
+}
