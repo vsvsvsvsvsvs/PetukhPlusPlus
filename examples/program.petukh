@@ -1,13 +1,48 @@
 fn int main() {
     int n = inputInt();
     int a[n];
-    for (int i = 0; i < n; i = i + 1) {
+    int i = 0;
+    for (; i < n; i = i + 1) {
         a[i] = inputInt();
-        printInt(a[i]);
     }
     int tree[2 * n];
     i = n;
     for (; i < 2 * n; i = i + 1) {
         tree[i] = a[i - n];
+    }
+    i = n - 1;
+    for (; i > 0; i = i - 1) {
+        tree[i] = tree[2 * i] + tree[2 * i + 1];
+    }
+    int q = inputInt();
+    for (int qq = 0; qq < q; qq = qq + 1) {
+        int t = inputInt();
+        if (t == 1) {
+            int l = inputInt(), r = inputInt();
+            l = l + n - 1;
+            r = r + n;
+            int answer = 0;
+            while (l < r) {
+                if (l % 2) {
+                    answer = answer + tree[l];
+                    l = l + 1;
+                }
+                if (r % 2) {
+                    r = r - 1;
+                    answer = answer + tree[r];
+                }
+                l = l / 2;
+                r = r / 2;
+            }
+            printInt(answer);
+        } else {
+            int pos = inputInt(), value = inputInt();
+            pos = pos + n;
+            tree[pos] = value;
+            while (pos > 1) {
+                pos = pos / 2;
+                tree[pos] = tree[pos * 2] + tree[pos * 2 + 1];
+            }
+        }
     }
 }

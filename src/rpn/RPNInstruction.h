@@ -17,6 +17,7 @@ enum class OpCode {
   SUB,
   MUL,
   DIV,
+  MOD,
   NEG,
 
   EQ,
@@ -33,6 +34,8 @@ enum class OpCode {
 
   CALL,
   RET,
+
+  POP,
 
   LABEL
 };
@@ -62,6 +65,7 @@ inline std::string OpCodeToString(OpCode op) {
     case OpCode::SUB: return "SUB";
     case OpCode::MUL: return "MUL";
     case OpCode::DIV: return "DIV";
+    case OpCode::MOD: return "MOD";
     case OpCode::NEG: return "NEG";
 
     case OpCode::EQ: return "EQ";
@@ -78,6 +82,8 @@ inline std::string OpCodeToString(OpCode op) {
 
     case OpCode::CALL: return "CALL";
     case OpCode::RET: return "RET";
+
+    case OpCode::POP: return "POP";
 
     case OpCode::LABEL: return "LABEL";
   }

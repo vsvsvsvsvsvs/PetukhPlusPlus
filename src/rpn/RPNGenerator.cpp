@@ -75,29 +75,44 @@ void RPNGenerator::GenStatement(ASTNode *node) {
       break;
 
     case NodeKind::ExprStmt:
-      if (!node->children.empty())
-        GenExpression(node->children[0].get());
+      if (!node->children.empty()) {
+        auto *expr = node->children[0].get();
+        GenExpression(expr);
+        // Если выражение само не потребляет результат (CALL и ASSIGN — потребляют),
+        // то нужно сбросить результат, иначе он накапливается на стеке.
+        if (expr->kind != NodeKind::Call && expr->kind != NodeKind::Assign)
+          code_.emplace_back(OpCode::POP);
+      }
       break;
+
 
     case NodeKind::VarDeclList:
       // children[0] — TypeNode
       for (size_t i = 1; i < node->children.size(); ++i) {
         auto *var = node->children[i].get();
 
-        if (!var->children.empty()) {
-          // if it's an array declaration (isArray==true) — create array
-          if (var->isArray) {
-            // child 0 is the size expression
+        if (var->isArray) {
+          // array declaration: expect size expression; if missing use 0
+          if (!var->children.empty()) {
             GenExpression(var->children[0].get());
-            code_.emplace_back(OpCode::NEW_ARRAY);
-            code_.emplace_back(OpCode::STORE, var->text);
           } else {
-            GenExpression(var->children[0].get());
-            code_.emplace_back(OpCode::STORE, var->text);
+            code_.emplace_back(OpCode::PUSH_INT, "0");
           }
+          code_.emplace_back(OpCode::NEW_ARRAY);
+          code_.emplace_back(OpCode::STORE, var->text);
+        } else {
+          // scalar variable
+          if (!var->children.empty()) {
+            GenExpression(var->children[0].get());
+          } else {
+            // initialize plain variable with 0
+            code_.emplace_back(OpCode::PUSH_INT, "0");
+          }
+          code_.emplace_back(OpCode::STORE, var->text);
         }
       }
       break;
+
 
     case NodeKind::Assign:
       // handled in GenExpression (assignment may appear inside expressions)
@@ -154,28 +169,48 @@ void RPNGenerator::GenStatement(ASTNode *node) {
     }
 
     case NodeKind::For: {
-      // children: init, cond, iter, body
-      std::string start = NewLabel();
-      std::string end = NewLabel();
-      std::string iterLabel = NewLabel();
+      // AST: children[0]=init, children[1]=cond, children[2]=step, children[3]=body
+      std::string startLabel = NewLabel();
+      std::string stepLabel = NewLabel();
+      std::string endLabel = NewLabel();
 
-      breakLabels_.push_back(end);
-      continueLabels_.push_back(iterLabel);
+      breakLabels_.push_back(endLabel);
+      continueLabels_.push_back(stepLabel);
 
-      GenStatement(node->children[0].get());
+      // 1. Init part
+      if (node->children[0]) {
+        GenStatement(node->children[0].get());
+      }
 
-      code_.emplace_back(OpCode::LABEL, start);
+      code_.emplace_back(OpCode::LABEL, startLabel);
 
-      GenExpression(node->children[1].get());
-      code_.emplace_back(OpCode::JZ, end);
+      // 2. Condition part
+      if (node->children[1]) {
+        GenExpression(node->children[1].get());
+        code_.emplace_back(OpCode::JZ, endLabel); // If condition is false, jump to end
+      }
 
-      GenStatement(node->children[3].get());
+      // 4. Body part
+      if (node->children[3]) {
+        GenStatement(node->children[3].get());
+      }
 
-      code_.emplace_back(OpCode::LABEL, iterLabel);
-      GenExpression(node->children[2].get());
-      code_.emplace_back(OpCode::JMP, start);
+      // 3. Step part
+      code_.emplace_back(OpCode::LABEL, stepLabel);
+      if (node->children[2]) {
+        auto* stepExpr = node->children[2].get();
+        GenExpression(stepExpr);
 
-      code_.emplace_back(OpCode::LABEL, end);
+        // Pop result of step expression if it's not an assignment or call
+        if (stepExpr->kind != NodeKind::Call && stepExpr->kind != NodeKind::Assign) {
+          code_.emplace_back(OpCode::POP);
+        }
+      }
+
+      // Jump back to the start to re-evaluate the condition
+      code_.emplace_back(OpCode::JMP, startLabel);
+
+      code_.emplace_back(OpCode::LABEL, endLabel);
 
       breakLabels_.pop_back();
       continueLabels_.pop_back();
@@ -280,6 +315,7 @@ void RPNGenerator::GenExpression(ASTNode *node) {
       else if (node->text == "-") code_.emplace_back(OpCode::SUB);
       else if (node->text == "*") code_.emplace_back(OpCode::MUL);
       else if (node->text == "/") code_.emplace_back(OpCode::DIV);
+      else if (node->text == "%") code_.emplace_back(OpCode::MOD);
       else if (node->text == "==") code_.emplace_back(OpCode::EQ);
       else if (node->text == "!=") code_.emplace_back(OpCode::NEQ);
       else if (node->text == "<") code_.emplace_back(OpCode::LT);

@@ -309,39 +309,40 @@ std::unique_ptr<ASTNode> Parser::ParseFor() {
 
     auto node = make_node(NodeKind::For, "For");
 
-    // ForInit = Type VarList
-    if (Match({TokenType::KW_INT, TokenType::KW_CHAR, TokenType::KW_DOUBLE, TokenType::KW_STRING})) {
-        Token backTypeTok = tokens_[pos_ - 1];
-        pos_--; // step back so ParseVarDeclList consumes type
-        node->children.push_back(ParseVarDeclList(backTypeTok.type));
-    } else {
-        // grammar expects Type VarList, but accept empty init (defensive)
-        if (!Match(TokenType::SEMICOLON)) {
-            AddError("expected type declaration or ';' in for-init");
-            // attempt to skip tokens until ';' or ')'
-            while (!IsAtEnd() && Peek().type != TokenType::SEMICOLON && Peek().type != TokenType::RPAREN) Advance();
-            if (Match(TokenType::SEMICOLON)) {
-                // ok, consumed
-            } else {
-                // leave; will be handled by following Expect
-            }
-        }
-    }
+    // Ensure the for-node always has 4 children: init, cond, step, body.
+    // We pre-allocate them as nullptrs.
+    node->children.resize(4);
 
-    // condition
+    // --- 1. Init Part ---
+    if (Peek().type == TokenType::KW_INT || Peek().type == TokenType::KW_CHAR ||
+        Peek().type == TokenType::KW_DOUBLE || Peek().type == TokenType::KW_STRING) {
+        // Case for declaration init: for (int i = 0; ...)
+        // The existing ParseVarDeclList consumes the semicolon, which is what we want here.
+        node->children[0] = ParseVarDeclList(Peek().type);
+        } else if (Peek().type != TokenType::SEMICOLON) {
+            // Case for expression init: for (i = 0; ...)
+            node->children[0] = ParseExpression();
+            Expect(TokenType::SEMICOLON, "expected ';' after for-init expression");
+        } else {
+            // Case for empty init: for (; ...)
+            Expect(TokenType::SEMICOLON, ""); // Just consume the semicolon.
+        }
+
+    // --- 2. Condition Part ---
     if (Peek().type != TokenType::SEMICOLON) {
-        node->children.push_back(ParseExpression());
+        node->children[1] = ParseExpression();
     }
     Expect(TokenType::SEMICOLON, "expected ';' after for condition");
 
-    // iter expression
+    // --- 3. Step/Increment Part ---
     if (Peek().type != TokenType::RPAREN) {
-        node->children.push_back(ParseExpression());
+        node->children[2] = ParseExpression();
     }
     Expect(TokenType::RPAREN, "expected ')' after for header");
 
-    // body
-    node->children.push_back(ParseBlock());
+    // --- 4. Body Part ---
+    node->children[3] = ParseBlock();
+
     return node;
 }
 

@@ -463,39 +463,43 @@ void SemanticAnalyzer::CheckStatement(const ASTNode *node) {
 
     case NodeKind::For: {
       /*
-        Ожидаем:
-          0 — init (stmt или expr stmt или decl)
-          1 — condition (expr)
-          2 — step (expr stmt)
-          остальное — тело (обычно один Block)
+        AST Structure (guaranteed by new parser):
+          - children[0]: init statement (can be null)
+          - children[1]: condition expression (can be null)
+          - children[2]: step expression (can be null)
+          - children[3]: body statement (can be null)
       */
+      EnterScope(); // For-loops have their own scope (e.g., for 'int i=0')
 
-      // init — это statement
-      if (node->children.size() > 0)
+      // 1. Init statement
+      if (node->children[0]) {
         CheckStatement(node->children[0].get());
+      }
 
-      // condition — expression
-      if (node->children.size() > 1) {
-        auto cond = CheckExpression(node->children[1].get());
-        if (cond != TypeKind::INT &&
-            cond != TypeKind::UNKNOWN)
-        {
-          Error("For condition must be int");
+      // 2. Condition expression
+      if (node->children[1]) {
+        auto condType = CheckExpression(node->children[1].get());
+        if (condType != TypeKind::INT && condType != TypeKind::UNKNOWN) {
+          Error("For loop condition must be an integer expression");
         }
       }
 
-      // step — expression / exprstmt
-      if (node->children.size() > 2)
-        CheckStatement(node->children[2].get());
+      // 3. Step expression (checked as an expression, value is discarded)
+      if (node->children[2]) {
+        CheckExpression(node->children[2].get());
+      }
 
-      // тело
+      // 4. Body
       loopDepth++;
-      for (size_t i = 3; i < node->children.size(); i++)
-        CheckStatement(node->children[i].get());
+      if (node->children[3]) {
+        CheckStatement(node->children[3].get());
+      }
       loopDepth--;
 
+      ExitScope(); // Exit the for-loop's scope
       return;
     }
+
     case NodeKind::If:
     case NodeKind::ElseIf: {
       if (!node->children.empty()) {

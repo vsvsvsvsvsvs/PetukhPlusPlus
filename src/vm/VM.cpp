@@ -33,6 +33,11 @@ int VM::Run() {
     const Instruction &ins = code_[ip];
 
     switch (ins.op) {
+      case OpCode::POP:
+        Pop();
+        ip++;
+        break;
+
       case OpCode::PUSH_INT: HandlePushInt(ins.arg); ip++; break;
       case OpCode::PUSH_DOUBLE: HandlePushDouble(ins.arg); ip++; break;
       case OpCode::PUSH_STRING: HandlePushString(ins.arg); ip++; break;
@@ -48,6 +53,7 @@ int VM::Run() {
       case OpCode::SUB:
       case OpCode::MUL:
       case OpCode::DIV:
+      case OpCode::MOD:
       case OpCode::EQ:
       case OpCode::NEQ:
       case OpCode::LT:
@@ -292,6 +298,13 @@ void VM::HandleBinaryOp(OpCode op) {
         if (ib == 0) Push(Value::MakeInt(0));
         else Push(Value::MakeInt(a.AsInt() / ib));
       }
+      break;
+
+    case OpCode::MOD: {
+      int64_t ib = b.AsInt();
+      if (ib == 0) Push(Value::MakeInt(0)); // Avoid division by zero
+      else Push(Value::MakeInt(a.AsInt() % ib));
+    }
       break;
 
     case OpCode::EQ: Push(Value::MakeInt(a.AsString() == b.AsString() ? 1 : 0)); break;
