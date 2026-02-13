@@ -224,9 +224,11 @@ Program: Program
               ExprStmt: ExprStmt
                 Assign: =
                   Identifier: pos
-                  Binary: +
-                    Identifier: pos
-                    Identifier: n
+                  Binary: -
+                    Binary: +
+                      Identifier: pos
+                      Identifier: n
+                    Number: 1
               ExprStmt: ExprStmt
                 Assign: =
                   Index: Index
