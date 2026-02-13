@@ -349,7 +349,7 @@ void VM::HandleUnaryOp(OpCode op) {
 
 bool VM::IsBuiltin(const std::string &name) const {
   return name == "printInt" || name == "printStr" || name == "printDouble" ||
-         name == "inputInt" || name == "inputStr" || name == "inputDouble";
+         name == "inputInt" || name == "inputStr" || name == "inputDouble" || name == "vsuprun";
 }
 
 void VM::CallBuiltin(const std::string &name) {
@@ -371,5 +371,7 @@ void VM::CallBuiltin(const std::string &name) {
     // if previous extraction left a newline, try again
     if (s.empty() && std::cin.good()) std::getline(std::cin, s);
     Push(Value::MakeString(s));
+  } else if (name == "vsuprun") {
+    Push(Value::MakeInt(1.0 * clock() / CLOCKS_PER_SEC >= 1.95));
   }
 }

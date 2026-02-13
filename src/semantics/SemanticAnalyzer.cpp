@@ -112,6 +112,10 @@ void SemanticAnalyzer::Analyze(ASTNode *root) {
     s = Symbol{"inputStr", TypeKind::STRING, false, true};
     s.paramTypes = {}; s.paramIsArray = {};
     currentScope->Declare(s);
+
+    s = Symbol{"vsuprun", TypeKind::INT, false, true};
+    s.paramTypes = {}; s.paramIsArray = {};
+    currentScope->Declare(s);
   }
 
   // pre-declare functions (first pass) from AST
